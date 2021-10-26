@@ -1,3 +1,11 @@
+// Showing the COVID-19 cases by countries for each day
+// data.csv  (if you want to use an updated one)
+//    https://www.ecdc.europa.eu/en/publications-data/data-daily-new-cases-covid-19-eueea-country
+// europe.svg
+//    https://simplemaps.com/resources/svg-europe
+// There are countries, which there are no COVID cases or in the data.csv (e.g. not EU countries anymore, etc)
+// These countries are coloured with grey
+
 PShape europe;
 Table table;
 Table sortedTable;
@@ -115,7 +123,7 @@ void colourCountries(){
         float divide = (float)sortedTable.getRow(j).getInt(4)/ (float)maxCase.getInt(4);
           fillValue = divide*255;
         //Fill value test
-        println(sortedTable.getRow(j).getString(7) + " " + sortedTable.getRow(j).getInt(4) + "/" +maxCase.getInt(4) + " is " + divide + " " + fillValue);
+        //println(sortedTable.getRow(j).getString(7) + " " + sortedTable.getRow(j).getInt(4) + "/" +maxCase.getInt(4) + " is " + divide + " " + fillValue);
         europe.getChild(i).setFill(color(230, 30, 30, (int)fillValue));  
         shape(europe.getChild(i));
       }
