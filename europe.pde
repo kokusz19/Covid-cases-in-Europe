@@ -2,16 +2,24 @@ PShape europe;
 Table table;
 int minDay = 31, minMonth = 12, minYear = 3000;
 int maxDay = 0, maxMonth = 0, maxYear = 0;
+Date minDate, maxDate;
 HScrollbar scrollbar;
+
 
 void setup(){
   size(1050, 750);
   europe = loadShape("europe.svg");
   table = loadTable("data.csv", "header");
   
-  getMinMaxDates(/*true*/);
+  getMinMaxDates();
+  //getMinMaxDates(true);
+  minDate = new Date(minDay, minMonth, minYear);
+  maxDate = new Date(maxDay, maxMonth, maxYear);
+  Date tmpDate = new Date();
+  //println(minDate.toString() + "\t" + minDate.getRepresentationFromValue() + "\t" + tmpDate.getValueFromRepresentation(minDate.getRepresentationFromValue()));
+  //println(maxDate.toString() + "\t" + maxDate.getRepresentationFromValue() + "\t" + tmpDate.getValueFromRepresentation(maxDate.getRepresentationFromValue()));
 
-  scrollbar = new HScrollbar(50, height-50, width-100, 16,  1);
+  scrollbar = new HScrollbar(25, height-50, width-50, 16,  1);
 }
 
 void draw(){
@@ -20,10 +28,17 @@ void draw(){
     europe.getChild(i).setFill(color(5*i, 5*i, 5*i));   
     shape(europe.getChild(i));  
   }
+  text(minDate.toString(), 25, height-25);
+  text(maxDate.toString(), width-95, height-25);
+  
+  Date tmpDate = new Date();
+  int diff = floor((maxDate.getRepresentation()-minDate.getRepresentation())*floor(scrollbar.getPos())/1000)-7;
+  Date chosenDate = tmpDate.getValueFromRepresentation(minDate.getRepresentation() + diff);
+  text(chosenDate.toString(), width/2, height-25);
+  
   scrollbar.update();
   scrollbar.display();
-  println(scrollbar.spos + " " + scrollbar.newspos);
-}
+  }
 
 
 void getMinMaxDates(){
