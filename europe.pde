@@ -71,14 +71,31 @@ void updateChosenDate(){
   Date chosenDate = new Date();
   try{
     chosenDate = tmpDate.getValueFromRepresentation(minDate.getRepresentation() + diff);
-    text(chosenDate.toString(), width/2, height-25);
-    sortedTable = loadTable("data.csv", "header");
-    for(int i = sortedTable.getRowCount()-1 ; i >= 0; i--)
-      if(sortedTable.getRow(i).getInt(1) != chosenDate.day || sortedTable.getRow(i).getInt(2) != chosenDate.month || sortedTable.getRow(i).getInt(3) != chosenDate.year)
-        sortedTable.removeRow(i);
   } catch(ArrayIndexOutOfBoundsException e){
-    chosenDate = tmpDate.getValueFromRepresentation(chosenDate.getRepresentation()-1);
+    chosenDate = tmpDate.getValueFromRepresentation(chosenDate.getRepresentation()-3);
+    scrollbar.setPos(scrollbar.getPos()-3);
   }
+  text(chosenDate.toString(), width/2, height-25);
+  sortedTable = loadTable("data.csv", "header");
+  for(int i = sortedTable.getRowCount()-1 ; i >= 0; i--){
+    if(chosenDate.month == 2 || chosenDate.month == 4 || chosenDate.month == 6 || chosenDate.month == 9 || chosenDate.month == 11){
+      if(chosenDate.day == 31)
+          reduceChosenDate(chosenDate);
+      if(chosenDate.month == 2){
+        if(chosenDate.day == 30)
+          reduceChosenDate(chosenDate);
+        if(chosenDate.day == 29 && chosenDate.year%4!=0)
+          reduceChosenDate(chosenDate);
+      }
+    }
+    if(sortedTable.getRow(i).getInt(1) != chosenDate.day || sortedTable.getRow(i).getInt(2) != chosenDate.month || sortedTable.getRow(i).getInt(3) != chosenDate.year)
+      sortedTable.removeRow(i);
+  }
+}
+
+void reduceChosenDate(Date chosenDate){
+  chosenDate.representation -= 1;
+  chosenDate.day -= 1;
 }
 
 void getMaxCase(){
@@ -86,7 +103,6 @@ void getMaxCase(){
   for(int i = sortedTable.getRowCount()-1 ; i >= 0; i--)
     if(maxCase.getInt(4) < sortedTable.getRow(i).getInt(4))
        maxCase = sortedTable.getRow(i);
-
   // Print country with info with the max cases
   text("Country: " + maxCase.getString(6) + "\nCases: " + maxCase.getInt(4) + "\nDeaths: " + maxCase.getInt(5), 0, 10);
 }

@@ -71,4 +71,7 @@ class HScrollbar {
     // 0 and the total width of the scrollbar
     return spos * ratio;
   }
+  void setPos(float tmpSpos) {
+    spos = tmpSpos;
+  }
 }
