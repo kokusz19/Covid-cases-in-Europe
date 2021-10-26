@@ -44,23 +44,10 @@ void draw(){
   updateChosenDate();
   // Get the country with the max case for the chosen date
   getMaxCase();
-    
-  //println(maxCase.getString(6) + " had the max case of " + maxCase.getInt(4) + " at " + maxCase.getString(0));
-  for(int i = 0; i < countriesCount; i++){
-    float fillValue = 0;
-    for(int j = 0; j < sortedTable.getRowCount(); j++){
-      if(sortedTable.getRow(j).getString(7).equals(countries[i].shortName)){
-        float divide = (float)sortedTable.getRow(j).getInt(4)/ (float)maxCase.getInt(4);
-          fillValue = divide*255;
-        //Fill value test
-        println(sortedTable.getRow(j).getString(7) + " " + sortedTable.getRow(j).getInt(4) + "/" +maxCase.getInt(4) + " is " + divide + " " + fillValue);
-      }
-    }
-    // TODO update
-    // countries (only Europe SVG) vs sortedTable (only Covid "EU" dates)
-    europe.getChild(i).setFill(color((int)(1/fillValue), 230, 30, 30));  
-    shape(europe.getChild(i));  
-  }
+  // Give a basic colour to all countries
+  basicColourCountries();
+  // Give a colour to all countries based on their covid cases
+  colourCountries();
   findChosenCountry();
 }
 
@@ -107,8 +94,41 @@ void getMaxCase(){
   text("Country: " + maxCase.getString(6) + "\nCases: " + maxCase.getInt(4) + "\nDeaths: " + maxCase.getInt(5), 0, 10);
 }
 
+void basicColourCountries(){
+  for(int i = 0; i < countriesCount; i++){
+    for(int j = 0; j < sortedTable.getRowCount(); j++){
+      if(sortedTable.getRow(j).getString(7).equals(countries[i].shortName)){
+        europe.getChild(i).setFill(color(0, 230, 0, 25));  
+        shape(europe.getChild(i));
+      }
+    }
+  }
+}
+
+void colourCountries(){
+   for(int i = 0; i < countriesCount; i++){
+    float fillValue = 0;
+    boolean found = false;
+    for(int j = 0; j < sortedTable.getRowCount(); j++){
+      if(sortedTable.getRow(j).getString(7).equals(countries[i].shortName)){
+        found = true;
+        float divide = (float)sortedTable.getRow(j).getInt(4)/ (float)maxCase.getInt(4);
+          fillValue = divide*255;
+        //Fill value test
+        println(sortedTable.getRow(j).getString(7) + " " + sortedTable.getRow(j).getInt(4) + "/" +maxCase.getInt(4) + " is " + divide + " " + fillValue);
+        europe.getChild(i).setFill(color(230, 30, 30, (int)fillValue));  
+        shape(europe.getChild(i));
+      }
+    }
+    if(!found){
+      europe.getChild(i).setFill(color(15, 15, 15, 180));  
+      shape(europe.getChild(i));
+    }
+  }
+}
+
 void findChosenCountry(){
-  fill(255, 0, 0);
+  fill(0);
   // last 3 children was a circle
   for(int i = 0; i < europe.getChildCount()-3; i++)
      if(europe.getChild(i).contains(mouseX, mouseY)){
