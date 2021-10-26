@@ -7,6 +7,7 @@ Date minDate, maxDate;
 HScrollbar scrollbar;
 int maxCases = 0;
 TableRow maxCase;
+TableRow chosenCountry;
 Countries[] countries;
 int countriesCount = 0;
 
@@ -87,7 +88,19 @@ void draw(){
     europe.getChild(i).setFill(color(5*i, 5*i, 5*i));   
     shape(europe.getChild(i));  
   }
+  findChosenCountry();
+}
 
+void findChosenCountry(){
+  fill(255, 0, 0);
+  for(int i = 0; i < countriesCount; i++){
+     if(europe.getChild(i).contains(mouseX, mouseY)){
+       for(int j = 0; j < sortedTable.getRowCount(); j++){
+         if(sortedTable.getRow(j).getString(7).equals(countries[i].shortName))
+           text(sortedTable.getRow(j).getString(6) + "\nCases: " + sortedTable.getRow(j).getInt(4) + "\nDeaths: " + sortedTable.getRow(j).getInt(5), mouseX, mouseY+10);  
+       }
+     }
+  }
 }
 
 void populateCountries(){
