@@ -7,6 +7,8 @@ Date minDate, maxDate;
 HScrollbar scrollbar;
 int maxCases = 0;
 TableRow maxCase;
+Countries[] countries;
+int countriesCount = 0;
 
 boolean test = true;
 
@@ -25,6 +27,14 @@ void setup(){
   //println(maxDate.toString() + "\t" + maxDate.getRepresentationFromValue() + "\t" + tmpDate.getValueFromRepresentation(maxDate.getRepresentationFromValue()));
 
   scrollbar = new HScrollbar(25, height-50, width-50, 16,  1);
+  
+  countries = new Countries[europe.getChildCount()];
+  populateCountries();
+  /*
+  for(int i = 0; i < countriesCount; i++){
+    println(countries[i].toString()); 
+  }
+  */
 }
 
 void draw(){
@@ -62,13 +72,43 @@ void draw(){
        maxCase = sortedTable.getRow(i);
     }
   }
-  println(maxCase.getString(6) + " had the max case of " + maxCase.getInt(4) + " at " + maxCase.getString(0));
+  //println(maxCase.getString(6) + " had the max case of " + maxCase.getInt(4) + " at " + maxCase.getString(0));
+  for(int i = 0; i < countriesCount; i++){
+    int fillValue = 0;
+    for(int j = 0; j < sortedTable.getRowCount(); j++){
+      if(sortedTable.getRow(j).getString(7).equals(countries[i].shortName))
+        fillValue = sortedTable.getRow(j).getInt(4)/maxCase.getInt(4)*255;
+    }
+    europe.getChild(i).setFill(fillValue);  
+    shape(europe.getChild(i));  
+  }
 
   for(int i = 0; i < europe.getChildCount(); i++){
     europe.getChild(i).setFill(color(5*i, 5*i, 5*i));   
     shape(europe.getChild(i));  
   }
 
+}
+
+void populateCountries(){
+  String[] lines = loadStrings("europe.svg");
+  for(int i = 0 ; i < lines.length; i++){
+    if(lines[i].startsWith(" <path")){
+      String[] elements = lines[i].split(" ");
+      String tmpShortName = "", tmpLongName = "";
+      for(int j = 0; j < elements.length; j++){
+          if(elements[j].startsWith("id")){
+            String[] tmp = elements[j].split("=");
+            tmpShortName = tmp[1].replace('"', ' ').trim();
+          } if(elements[j].startsWith("name")){
+            String[] tmp = elements[j].split("=");
+            tmpLongName = tmp[1].replace('"', ' ').replace(">", " ").trim();
+          }
+      }
+      countries[countriesCount] = new Countries(countriesCount, tmpShortName, tmpLongName);
+      countriesCount++;
+    }
+  }
 }
 
 void getMinMaxDates(){
