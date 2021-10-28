@@ -8,7 +8,7 @@
  class Button{
   int rectX, rectY;      // Position of square button
   int rectXSize, rectYSize;     // Diameter of rect
-  color currentColor, baseColor, selectedColor, highlightColor, highlightSelectedColor;
+  color currentColor, baseColor, selectedColor, highlightColor;
   boolean rectOver = false;
   
   Button(int x, int y, int x2, int y2){
@@ -19,18 +19,13 @@
     currentColor = baseColor = color(185);
     highlightColor = color(200);
     selectedColor = color(230);
-    highlightSelectedColor = color(235);
   }
    
   void update() {
     if (mouseX == 0 && mouseY == 0);
     else if ( overRect(rectX, rectY, (rectXSize-rectX), (rectYSize-rectY)) ) {
       rectOver = true;
-      println("base color: " + baseColor + "\nselected color: " + selectedColor + "\ncurrent color: " + currentColor);
-      if(currentColor == baseColor)
-        currentColor = highlightColor;
-      else if(currentColor == selectedColor)
-        currentColor = highlightSelectedColor;
+      currentColor = highlightColor;
     } else {
       rectOver = false;
       currentColor = baseColor;
