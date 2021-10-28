@@ -14,7 +14,11 @@
 //  3) Move the "gicentreUtils.jar" from the previously downloaded "gicentreUtils.zip" to this folder
 //  4) Restart Processing
 
+// To use ControlP5 library, download it from the below link and use the previously mentioned method to install it
+//    http://www.sojamo.de/libraries/controlP5/
+
 import org.gicentre.utils.stat.*;
+import controlP5.*;
 
 PShape europe;
 Table table;
@@ -28,6 +32,8 @@ int countriesCount = 0;
 boolean firstPanelSelected = true;
 Button panel1, panel2, panel3;
 BarChart barchart;
+ControlP5 cp5;
+DropdownList dl;
 
 void setup(){
   size(1050, 800);
@@ -44,6 +50,7 @@ void setup(){
 
   // Create a barchart
   barchart = new BarChart(this);
+  cp5 = new ControlP5(this);
 
   // Find minimum and maximum dates in the CSV
   getMinMaxDates();
@@ -81,6 +88,10 @@ void draw(){
     colourCountries();
     // Show info for the country, which contains the mouse coordinates
     findChosenCountry();
+    if(dl != null){
+      dl.remove();
+      dl = null;
+    }
   }
   // Show graph
   else{
@@ -96,9 +107,26 @@ void draw(){
     // Get the chosen date from the scrollbar
     updateChosenDate();
 
+    if(dl == null){
+      dl = cp5.addDropdownList("Please select a chart type").setPosition(500, 20);
+      customizeDL(dl);
+    }
     // Create the barchart for this panel
     showBarChart();
   }
+}
+
+void customizeDL(DropdownList ddl) {
+  // a convenience function to customize a DropdownList
+  ddl.setBackgroundColor(color(190));
+  ddl.setItemHeight(20);
+  ddl.setBarHeight(15);
+  for (int i=0;i<4;i++) {
+    ddl.addItem("Barchart", i);
+  }
+  //ddl.scroll(0);
+  ddl.setColorBackground(color(60));
+  ddl.setColorActive(color(255, 128));
 }
 void mousePressed() {
   // Check if the mouse has been clicked inside of a panel
