@@ -19,14 +19,32 @@ class Date{
     int tmpYear = floor((float)representation/365);
     int tmpMonth = floor((float)(representation-tmpYear*365)/31);
     int tmpDay = representation-tmpYear*365-tmpMonth*31+1;
+    convert(tmpDay, tmpMonth, tmpYear);
     Date tmpDate = new Date(tmpDay, tmpMonth, tmpYear);    
     return tmpDate;
   }
   
   String toString(){
+    convert(day, month, year);
     return year+"."+month+"."+day;
   }
   
-  // TODO: update
-  // https://forum.processing.org/one/topic/converting-day-month-year-to-the-day-of-year.html
+  void convert(int locDay, int locMonth, int locYear){
+    if(locMonth == 2 || locMonth == 4 || locMonth == 6 || locMonth == 9 || locMonth == 11){
+      if(locDay == 31){
+        locDay = 1;
+        locMonth += 1;
+      }
+      if(locMonth == 2){
+        if(locDay == 30){
+          locDay = 1;
+          locMonth += 1;
+        }
+        if(locDay == 29 && locYear%4!=0){
+           locDay = 1;
+           locMonth += 1;
+        }
+      }
+    }
+  }
 }

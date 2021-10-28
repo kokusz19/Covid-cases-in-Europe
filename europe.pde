@@ -70,7 +70,6 @@ void updateChosenDate(){
     chosenDate = tmpDate.getValueFromRepresentation(chosenDate.getRepresentation()-3);
     scrollbar.setPos(scrollbar.getPos()-3);
   }
-  text(chosenDate.toString(), width/2, height-25);
   sortedTable = loadTable("data.csv", "header");
   for(int i = sortedTable.getRowCount()-1 ; i >= 0; i--){
     if(chosenDate.month == 2 || chosenDate.month == 4 || chosenDate.month == 6 || chosenDate.month == 9 || chosenDate.month == 11){
@@ -83,14 +82,15 @@ void updateChosenDate(){
           reduceChosenDate(chosenDate);
       }
     }
+    text(chosenDate.toString(), width/2, height-25);
     if(sortedTable.getRow(i).getInt(1) != chosenDate.day || sortedTable.getRow(i).getInt(2) != chosenDate.month || sortedTable.getRow(i).getInt(3) != chosenDate.year)
       sortedTable.removeRow(i);
   }
 }
 
 void reduceChosenDate(Date chosenDate){
-  chosenDate.representation -= 1;
-  chosenDate.day -= 1;
+  chosenDate.day = 1;
+  chosenDate.month += 1;
 }
 
 void getMaxCase(){
