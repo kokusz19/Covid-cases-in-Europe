@@ -28,6 +28,7 @@ HScrollbar scrollbar;
 TableRow maxCase;
 TableRow chosenCountry;
 Countries[] countries;
+Countries[] finalCountries;
 int countriesCount = 0;
 int panelSelected = 1;
 Button panel1, panel2, panel3, panel4;
@@ -41,7 +42,7 @@ void setup(){
   // Load in Europe SVG and Data CSV
   europe = loadShape("europe.svg");
   table = loadTable("data.csv", "header");
-  
+    
   // Create the upper panels of the window
   panel1 = new Button(0, 0, 115, 45);
   panel2 = new Button(115, 0, 250, 45);
@@ -122,6 +123,7 @@ void draw(){
       dl = null;
     }
   }
+  // Show linechart for country
   else if(panelSelected == 3){
     // Show a barchart on this page (customized)
     // Create a dropdownlist with it's elements
@@ -129,9 +131,8 @@ void draw(){
       dl = cp5.addDropdownList("Please select a country").setPosition(15, 60);
       customizeDL(dl);
     }
-    // If a country has been selected .-d.a-d.A_SD:A_D.s-.
-    if(dl.getValue() != 0.0){
-      Countries chosenCountry = countries[(int)dl.getValue()];
+    if(dl.getValue() != 0.0 || dl.getLabel().equals(" ("+finalCountries[0].shortName+") " + finalCountries[0].longName)){
+      Countries chosenCountry = finalCountries[(int)dl.getValue()];
       
       countryTable = loadTable("data.csv", "header");
       // Remove not chosen countries from countryTable
@@ -139,29 +140,7 @@ void draw(){
         if(!countryTable.getRow(i).getString(7).equals(chosenCountry.shortName))
           countryTable.removeRow(i);
 
-      float[] number = new float[countryTable.getRowCount()];
-      float[] cases = new float[countryTable.getRowCount()];
-      float[] deaths = new float[countryTable.getRowCount()];
-      for(int i = cases.length-1; i >= 0 ; i--){
-        number[cases.length-i-1] = cases.length-i-1;
-        cases[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(4));
-        deaths[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(5));
-      }
-      linechart.setData(number, cases);
-    
-      linechart.showXAxis(true); 
-      linechart.showYAxis(true); 
-      //fill(color(180,50,50,100));
-      linechart.setMinY(0);
-      // Symbol colours
-      //linechart.setPointColour(color(180,50,50,100));
-      linechart.setPointSize(0);
-      linechart.setLineColour(color(0, 100, 0));
-      linechart.setLineWidth(2);
-      linechart.draw(70,100,width-110,height-150);
-      textAlign(CENTER);
-      text("Cases for each day\n(i^th day * cases)", 525, height-25);
-      // println(chosenCountry.number + " " + chosenCountry.shortName + " " + chosenCountry.longName);
+      showLineChart();
     }
   }
 }
@@ -172,8 +151,13 @@ void customizeDL(DropdownList ddl) {
   ddl.setBackgroundColor(color(190));
   ddl.setItemHeight(25);
   ddl.setBarHeight(25);
-  for (int i=0;i<countriesCount;i++) {
-    ddl.addItem(" (" + countries[i].shortName + ") " + countries[i].longName, i);
+
+  // Get all countries
+  getCountriesFromData();
+
+  for (int i=0;i<finalCountries.length;i++) {
+    if(finalCountries[i] != null)
+      ddl.addItem(" (" + finalCountries[i].shortName + ") " + finalCountries[i].longName, i);
   }
   //ddl.scroll(0);
   ddl.setColorBackground(color(185));
@@ -181,6 +165,25 @@ void customizeDL(DropdownList ddl) {
   ddl.setColorLabel(color(0));
   ddl.setColorValue(color(0));
 }
+
+void getCountriesFromData(){
+  int count = 0;
+  finalCountries = new Countries[table.getRowCount()];
+  //finalCountries[0] = new Countries(0, table.getRow(0).getString(7), table.getRow(0).getString(6));
+  for(int i = 1; i < table.getRowCount(); i++){
+    boolean found = false;
+    for(int j = 0; j < count; j++){
+      if(table.getRow(i).getString(7).equals(finalCountries[j].shortName))
+        found = true;
+    }
+    if(!found){
+      Countries tmpCountry = new Countries(count, table.getRow(i).getString(7), table.getRow(i).getString(6));
+      finalCountries[count] = tmpCountry;
+      count += 1;
+    }
+  }
+}
+
 void mousePressed() {
   // Check if the mouse has been clicked inside of a panel
   if (panel1.rectOver) {
@@ -304,6 +307,34 @@ void showBarChart(){
 
   // Drawing the barchart
   barchart.draw(25, 50, width-50, height-140);
+}
+void showLineChart(){
+  float[] number = new float[countryTable.getRowCount()];
+  float[] cases = new float[countryTable.getRowCount()];
+  float[] deaths = new float[countryTable.getRowCount()];
+  for(int i = cases.length-1; i >= 0 ; i--){
+    number[cases.length-i-1] = cases.length-i-1;
+    cases[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(4));
+    deaths[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(5));
+  }
+  linechart.setData(number, cases);
+
+  linechart.showXAxis(true); 
+  linechart.showYAxis(true); 
+  //fill(color(180,50,50,100));
+  linechart.setMinY(0);
+  // Symbol colours
+  //linechart.setPointColour(color(180,50,50,100));
+  linechart.setPointSize(0);
+  linechart.setLineColour(color(0, 100, 0));
+  linechart.setLineWidth(2);
+  linechart.draw(70,100,width-110,height-150);
+  linechart.updateLayout();
+  textAlign(LEFT);
+  text(minDate.toString(), 95, height-25);
+  text(maxDate.toString(), width-95, height-25);
+  textAlign(CENTER);
+  text("Cases for each day\n(i^th day * cases)", 525, height-25);
 }
 
 void basicColourCountries(){
