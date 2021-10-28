@@ -1,3 +1,4 @@
+import org.gicentre.utils.stat.*;
 // Showing the COVID-19 cases by countries for each day
 // data.csv  (if you want to use an updated one)
 //    https://www.ecdc.europa.eu/en/publications-data/data-daily-new-cases-covid-19-eueea-country
@@ -9,7 +10,7 @@
 PShape europe;
 Table table;
 Table sortedTable;
-Date minDate, maxDate;
+Date minDate, maxDate, chosenDate;
 HScrollbar scrollbar;
 TableRow maxCase;
 TableRow chosenCountry;
@@ -17,6 +18,7 @@ Countries[] countries;
 int countriesCount = 0;
 boolean firstPanelSelected = true;
 Button panel1, panel2, panel3;
+BarChart barchart;
 
 void setup(){
   size(1050, 800);
@@ -28,6 +30,10 @@ void setup(){
   panel2 = new Button(115, 0, 205, 45);
   panel3 = new Button(200, 0, width, 45);
   
+  chosenDate = new Date();
+
+  barchart = new BarChart(this);
+
   // Find minimum and maximum dates in the CSV
   getMinMaxDates();
   
@@ -69,6 +75,9 @@ void draw(){
   }
   // Show graph
   else{
+    // Get max cases for the day
+    getMaxCase(false);
+
     // Scrollbar + text
     scrollbar.update();
     scrollbar.display();
@@ -78,6 +87,7 @@ void draw(){
     // Get the chosen date from the scrollbar
     updateChosenDate();
 
+    showBarChart();
   }
 }
 void mousePressed() {
@@ -119,7 +129,6 @@ void updateChosenDate(){
    // Chosen date update
   Date tmpDate = new Date();
   int diff = floor((maxDate.getRepresentation()-minDate.getRepresentation())*floor(scrollbar.getPos())/1000)-7;
-  Date chosenDate = new Date();
   try{
     chosenDate = tmpDate.getValueFromRepresentation(minDate.getRepresentation() + diff);
   } catch(ArrayIndexOutOfBoundsException e){
@@ -150,12 +159,34 @@ void reduceChosenDate(Date chosenDate){
 }
 
 void getMaxCase(){
+  getMaxCase(true);
+}
+void getMaxCase(boolean show){
   maxCase = sortedTable.getRow(0);
   for(int i = sortedTable.getRowCount()-1 ; i >= 0; i--)
     if(maxCase.getInt(4) < sortedTable.getRow(i).getInt(4))
        maxCase = sortedTable.getRow(i);
   // Print country with info with the max cases
+  if(show)
   text("Country: " + maxCase.getString(6) + "\nCases: " + maxCase.getInt(4) + "\nDeaths: " + maxCase.getInt(5), 0, 60);
+}
+
+void showBarChart(){
+  barchart.setMinValue(0);
+  barchart.setMaxValue(maxCase.getInt(4) + maxCase.getInt(4)*0.1);
+     
+  barchart.showValueAxis(true);
+  barchart.setValueFormat("###,###");
+  barchart.showCategoryAxis(true);
+  
+  float[] values = new float[sortedTable.getRowCount()];
+  for(int i = 0; i < values.length; i++){
+    values[i] = Float.parseFloat(sortedTable.getRow(i).getString(4));
+  }
+  barchart.setData(values);
+  barchart.setBarLabels(sortedTable.getStringColumn(7));
+
+  barchart.draw(25, 50, width-50, height-140);
 }
 
 void basicColourCountries(){
