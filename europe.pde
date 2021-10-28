@@ -148,6 +148,7 @@ void draw(){
 void customizeDL(DropdownList ddl) {
   // a convenience function to customize a DropdownList
   ddl.setHeight(200);
+  ddl.setWidth(ddl.getWidth()+25);
   ddl.setBackgroundColor(color(190));
   ddl.setItemHeight(25);
   ddl.setBarHeight(25);
@@ -335,6 +336,7 @@ void showLineChart(){
   text(maxDate.toString(), width-95, height-25);
   textAlign(CENTER);
   text("Cases for each day\n(i^th day * cases)", 525, height-25);
+  textAlign(LEFT);
 }
 
 void basicColourCountries(){
