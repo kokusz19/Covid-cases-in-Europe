@@ -1,4 +1,3 @@
-import org.gicentre.utils.stat.*;
 // Showing the COVID-19 cases by countries for each day
 // data.csv  (if you want to use an updated one)
 //    https://www.ecdc.europa.eu/en/publications-data/data-daily-new-cases-covid-19-eueea-country
@@ -6,6 +5,16 @@ import org.gicentre.utils.stat.*;
 //    https://simplemaps.com/resources/svg-europe
 // There are countries, which there are no COVID cases or in the data.csv (e.g. not EU countries anymore, etc)
 // These countries are coloured with grey
+
+// To use the barchart tab, you have to get the GiCentre library
+//    http://gicentre.org/utils/gicentreUtils.zip
+// To install this library
+//  1) Locate your Processing folder's "libraries" folder (e.g. "C:\Users\Kokusz\Documents\Processing\libraries")
+//  2) Create a "gicentreUtils" folder inside of it and a "library" folder inside of this one (e.g. "C:\Users\Kokusz\Documents\Processing\libraries\gicentreUtils\library")
+//  3) Move the "gicentreUtils.jar" from the previously downloaded "gicentreUtils.zip" to this folder
+//  4) Restart Processing
+
+import org.gicentre.utils.stat.*;
 
 PShape europe;
 Table table;
@@ -26,12 +35,14 @@ void setup(){
   europe = loadShape("europe.svg");
   table = loadTable("data.csv", "header");
   
+  // Create the upper panels of the window
   panel1 = new Button(0, 0, 115, 45);
   panel2 = new Button(115, 0, 205, 45);
   panel3 = new Button(200, 0, width, 45);
   
   chosenDate = new Date();
 
+  // Create a barchart
   barchart = new BarChart(this);
 
   // Find minimum and maximum dates in the CSV
@@ -42,16 +53,13 @@ void setup(){
   
   countries = new Countries[europe.getChildCount()];
   populateCountries();
-  
-  //for(int i = 0; i < countriesCount; i++){
-  //  println(countries[i].toString()); 
-  //}
 }
 
 void draw(){
   background(230);
   // Create Buttons with upper panel
   createUpperPanel();
+  // Update the 2 upper panel
   panel1.update();
   panel2.update();
   
@@ -71,6 +79,7 @@ void draw(){
     basicColourCountries();
     // Give a colour to all countries based on their covid cases
     colourCountries();
+    // Show info for the country, which contains the mouse coordinates
     findChosenCountry();
   }
   // Show graph
@@ -87,10 +96,12 @@ void draw(){
     // Get the chosen date from the scrollbar
     updateChosenDate();
 
+    // Create the barchart for this panel
     showBarChart();
   }
 }
 void mousePressed() {
+  // Check if the mouse has been clicked inside of a panel
   if (panel1.rectOver) {
     panel1.currentColor = panel1.selectedColor;
   firstPanelSelected = true;
@@ -101,6 +112,8 @@ void mousePressed() {
   }
 }
 void createUpperPanel(){
+  // Creating upper panel
+  // First panel is selected by default, can be chosen by clicking on the second panel
   if(firstPanelSelected){
     createButton(panel1, true);
     createButton(panel2, false);
@@ -110,6 +123,7 @@ void createUpperPanel(){
     createButton(panel2, true);
     createButton(panel3, false);
   }
+  // Text placed in the panels
   fill(0);
   text("Show world map", 10, 25);
   fill(0);
@@ -126,8 +140,8 @@ void createButton(Button button, boolean selected){
 }
 
 void updateChosenDate(){
-   // Chosen date update
   Date tmpDate = new Date();
+  // diff = 0-1000 representation between the min and max dates
   int diff = floor((maxDate.getRepresentation()-minDate.getRepresentation())*floor(scrollbar.getPos())/1000)-7;
   try{
     chosenDate = tmpDate.getValueFromRepresentation(minDate.getRepresentation() + diff);
@@ -136,24 +150,28 @@ void updateChosenDate(){
     scrollbar.setPos(scrollbar.getPos()-3);
   }
   sortedTable = loadTable("data.csv", "header");
+  // If the date is not a valid date, set it to the next valid date
   for(int i = sortedTable.getRowCount()-1 ; i >= 0; i--){
     if(chosenDate.month == 2 || chosenDate.month == 4 || chosenDate.month == 6 || chosenDate.month == 9 || chosenDate.month == 11){
       if(chosenDate.day == 31)
-          reduceChosenDate(chosenDate);
+          updateChosenDate(chosenDate);
       if(chosenDate.month == 2){
         if(chosenDate.day == 30)
-          reduceChosenDate(chosenDate);
+          updateChosenDate(chosenDate);
         if(chosenDate.day == 29 && chosenDate.year%4!=0)
-          reduceChosenDate(chosenDate);
+          updateChosenDate(chosenDate);
       }
     }
+    // Showing of chosen date
     text(chosenDate.toString(), width/2, height-25);
+    // Remove not chosen dates from sortedTable
     if(sortedTable.getRow(i).getInt(1) != chosenDate.day || sortedTable.getRow(i).getInt(2) != chosenDate.month || sortedTable.getRow(i).getInt(3) != chosenDate.year)
       sortedTable.removeRow(i);
   }
 }
 
-void reduceChosenDate(Date chosenDate){
+void updateChosenDate(Date chosenDate){
+  // Setting next valid date
   chosenDate.day = 1;
   chosenDate.month += 1;
 }
@@ -172,24 +190,30 @@ void getMaxCase(boolean show){
 }
 
 void showBarChart(){
+  // Setting the min and max values of cases
   barchart.setMinValue(0);
   barchart.setMaxValue(maxCase.getInt(4) + maxCase.getInt(4)*0.1);
      
+  // Showing axis labels (country names - X, number of cases - Y)
   barchart.showValueAxis(true);
   barchart.setValueFormat("###,###");
   barchart.showCategoryAxis(true);
   
+  // Getting the values from the sortedTable in float to be used in the barchart
   float[] values = new float[sortedTable.getRowCount()];
   for(int i = 0; i < values.length; i++){
     values[i] = Float.parseFloat(sortedTable.getRow(i).getString(4));
   }
   barchart.setData(values);
+  // Setting the labels for each column
   barchart.setBarLabels(sortedTable.getStringColumn(7));
 
+  // Drawing the barchart
   barchart.draw(25, 50, width-50, height-140);
 }
 
 void basicColourCountries(){
+  // Set basic light green colouring for each found country
   for(int i = 0; i < countriesCount; i++){
     for(int j = 0; j < sortedTable.getRowCount(); j++){
       if(sortedTable.getRow(j).getString(7).equals(countries[i].shortName)){
@@ -201,10 +225,13 @@ void basicColourCountries(){
 }
 
 void colourCountries(){
-   for(int i = 0; i < countriesCount; i++){
+  // Loop through all the countries
+  for(int i = 0; i < countriesCount; i++){
     float fillValue = 0;
     boolean found = false;
     for(int j = 0; j < sortedTable.getRowCount(); j++){
+      // Get the data from data.csv for each country
+      // If found, the fill value of the country will be based on it's case value compared to the max cases found for that day
       if(sortedTable.getRow(j).getString(7).equals(countries[i].shortName)){
         found = true;
         float divide = (float)sortedTable.getRow(j).getInt(4)/ (float)maxCase.getInt(4);
@@ -215,6 +242,7 @@ void colourCountries(){
         shape(europe.getChild(i), 0, 50);
       }
     }
+    // If not found, will be coloured with gray
     if(!found){
       europe.getChild(i).setFill(color(15, 15, 15, 180));  
       shape(europe.getChild(i), 0, 50);
@@ -266,6 +294,7 @@ void populateCountries(){
 }
 
 void getMinMaxDates(){
+  // get Min and Max dates without the info (default showDetails=false)
   getMinMaxDates(false);
 }
 void getMinMaxDates(boolean showDetails){
