@@ -69,6 +69,14 @@ void draw(){
   }
   // Show graph
   else{
+    // Scrollbar + text
+    scrollbar.update();
+    scrollbar.display();
+    text(minDate.toString(), 25, height-25);
+    text(maxDate.toString(), width-95, height-25);
+    
+    // Get the chosen date from the scrollbar
+    updateChosenDate();
 
   }
 }
