@@ -22,16 +22,17 @@ import controlP5.*;
 
 PShape europe;
 Table table;
-Table sortedTable;
+Table sortedTable, countryTable;
 Date minDate, maxDate, chosenDate;
 HScrollbar scrollbar;
 TableRow maxCase;
 TableRow chosenCountry;
 Countries[] countries;
 int countriesCount = 0;
-boolean firstPanelSelected = true;
-Button panel1, panel2, panel3;
+int panelSelected = 1;
+Button panel1, panel2, panel3, panel4;
 BarChart barchart;
+XYChart linechart;
 ControlP5 cp5;
 DropdownList dl;
 
@@ -43,14 +44,16 @@ void setup(){
   
   // Create the upper panels of the window
   panel1 = new Button(0, 0, 115, 45);
-  panel2 = new Button(115, 0, 205, 45);
-  panel3 = new Button(200, 0, width, 45);
+  panel2 = new Button(115, 0, 250, 45);
+  panel3 = new Button(250, 0, 375, 45);
+  panel4 = new Button(375, 0, width, 45);
   
   chosenDate = new Date();
 
   // Create a barchart
   barchart = new BarChart(this);
   cp5 = new ControlP5(this);
+  linechart = new XYChart(this);
 
   // Find minimum and maximum dates in the CSV
   getMinMaxDates();
@@ -69,9 +72,10 @@ void draw(){
   // Update the 2 upper panel
   panel1.update();
   panel2.update();
+  panel3.update();
   
   // Show world map
-  if(firstPanelSelected){
+  if(panelSelected == 1){
     // Scrollbar + text
     scrollbar.update();
     scrollbar.display();
@@ -88,13 +92,15 @@ void draw(){
     colourCountries();
     // Show info for the country, which contains the mouse coordinates
     findChosenCountry();
+
+    // Don't show a barchart on this page
     if(dl != null){
       dl.remove();
       dl = null;
     }
   }
   // Show graph
-  else{
+  else if(panelSelected == 2){
     // Get max cases for the day
     getMaxCase(false);
 
@@ -107,55 +113,115 @@ void draw(){
     // Get the chosen date from the scrollbar
     updateChosenDate();
 
-    if(dl == null){
-      dl = cp5.addDropdownList("Please select a chart type").setPosition(500, 20);
-      customizeDL(dl);
-    }
     // Create the barchart for this panel
     showBarChart();
+
+    // Don't show a barchart on this page
+    if(dl != null){
+      dl.remove();
+      dl = null;
+    }
+  }
+  else if(panelSelected == 3){
+    // Show a barchart on this page (customized)
+    // Create a dropdownlist with it's elements
+    if(dl == null){
+      dl = cp5.addDropdownList("Please select a country").setPosition(15, 60);
+      customizeDL(dl);
+    }
+    // If a country has been selected .-d.a-d.A_SD:A_D.s-.
+    if(dl.getValue() != 0.0){
+      Countries chosenCountry = countries[(int)dl.getValue()];
+      
+      countryTable = loadTable("data.csv", "header");
+      // Remove not chosen countries from countryTable
+      for(int i = countryTable.getRowCount()-1 ; i >= 0; i--)
+        if(!countryTable.getRow(i).getString(7).equals(chosenCountry.shortName))
+          countryTable.removeRow(i);
+
+      float[] number = new float[countryTable.getRowCount()];
+      float[] cases = new float[countryTable.getRowCount()];
+      float[] deaths = new float[countryTable.getRowCount()];
+      for(int i = cases.length-1; i >= 0 ; i--){
+        number[cases.length-i-1] = cases.length-i-1;
+        cases[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(4));
+        deaths[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(5));
+      }
+      linechart.setData(number, cases);
+    
+      linechart.showXAxis(true); 
+      linechart.showYAxis(true); 
+      //fill(color(180,50,50,100));
+      linechart.setMinY(0);
+      // Symbol colours
+      //linechart.setPointColour(color(180,50,50,100));
+      linechart.setPointSize(0);
+      linechart.setLineColour(color(0, 100, 0));
+      linechart.setLineWidth(2);
+      linechart.draw(70,100,width-110,height-150);
+      textAlign(CENTER);
+      text("Cases for each day\n(i^th day * cases)", 525, height-25);
+      // println(chosenCountry.number + " " + chosenCountry.shortName + " " + chosenCountry.longName);
+    }
   }
 }
 
 void customizeDL(DropdownList ddl) {
   // a convenience function to customize a DropdownList
+  ddl.setHeight(200);
   ddl.setBackgroundColor(color(190));
-  ddl.setItemHeight(20);
-  ddl.setBarHeight(15);
-  for (int i=0;i<4;i++) {
-    ddl.addItem("Barchart", i);
+  ddl.setItemHeight(25);
+  ddl.setBarHeight(25);
+  for (int i=0;i<countriesCount;i++) {
+    ddl.addItem(" (" + countries[i].shortName + ") " + countries[i].longName, i);
   }
   //ddl.scroll(0);
-  ddl.setColorBackground(color(60));
+  ddl.setColorBackground(color(185));
   ddl.setColorActive(color(255, 128));
+  ddl.setColorLabel(color(0));
+  ddl.setColorValue(color(0));
 }
 void mousePressed() {
   // Check if the mouse has been clicked inside of a panel
   if (panel1.rectOver) {
     panel1.currentColor = panel1.selectedColor;
-  firstPanelSelected = true;
+  panelSelected = 1;
   }
   if (panel2.rectOver) {
     panel2.currentColor = panel2.selectedColor;
-  firstPanelSelected = false;
+  panelSelected = 2;
+  }
+  if (panel3.rectOver) {
+    panel3.currentColor = panel3.selectedColor;
+  panelSelected = 3;
   }
 }
 void createUpperPanel(){
   // Creating upper panel
   // First panel is selected by default, can be chosen by clicking on the second panel
-  if(firstPanelSelected){
+  if(panelSelected == 1){
     createButton(panel1, true);
     createButton(panel2, false);
     createButton(panel3, false);
-  } else{
+    createButton(panel4, false);
+  } else if(panelSelected == 2){
     createButton(panel1, false);
     createButton(panel2, true);
     createButton(panel3, false);
+    createButton(panel4, false);
+  } else if(panelSelected == 3){
+    createButton(panel1, false);
+    createButton(panel2, false);
+    createButton(panel3, true);
+    createButton(panel4, false);
   }
   // Text placed in the panels
   fill(0);
   text("Show world map", 10, 25);
   fill(0);
-  text("Show graph", 125, 25);
+  text("Show graph per day", 125, 25);
+  fill(0);
+  text("History of country", 260, 25);
 }
 void createButton(Button button, boolean selected){
     if(selected)
