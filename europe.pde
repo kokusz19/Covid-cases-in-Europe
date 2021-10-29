@@ -36,6 +36,7 @@ BarChart barchart;
 XYChart linechart;
 ControlP5 cp5;
 DropdownList dl;
+RadioButton rb;
 
 void setup(){
   size(1050, 800);
@@ -94,10 +95,13 @@ void draw(){
     // Show info for the country, which contains the mouse coordinates
     findChosenCountry();
 
-    // Don't show a barchart on this page
+    // Don't show a barchart or radiobutton on this page
     if(dl != null){
       dl.remove();
       dl = null;
+    } if(rb != null){
+      rb.remove();
+      rb = null;
     }
   }
   // Show graph
@@ -114,14 +118,19 @@ void draw(){
     // Get the chosen date from the scrollbar
     updateChosenDate();
 
-    // Create the barchart for this panel
-    showBarChart();
-
     // Don't show a barchart on this page
     if(dl != null){
       dl.remove();
       dl = null;
     }
+    if(rb == null)
+      createRadioButton();
+    
+    boolean showCases = rb.getState(0);
+    
+    // Create the barchart for this panel
+    showBarChart(showCases);
+
   }
   // Show linechart for country
   else if(panelSelected == 3){
@@ -135,12 +144,17 @@ void draw(){
       Countries chosenCountry = finalCountries[(int)dl.getValue()];
       
       countryTable = loadTable("data.csv", "header");
+      boolean showCases = true;
       // Remove not chosen countries from countryTable
       for(int i = countryTable.getRowCount()-1 ; i >= 0; i--)
         if(!countryTable.getRow(i).getString(7).equals(chosenCountry.shortName))
           countryTable.removeRow(i);
-
-      showLineChart();
+      // Create radiobutton only if it has not been created yet
+      if(rb == null)
+        createRadioButton();
+      // showCases will be used to indicate if the graph will show cases or deaths
+      showCases = rb.getState(0);
+      showLineChart(showCases);
     }
   }
 }
@@ -156,6 +170,7 @@ void customizeDL(DropdownList ddl) {
   // Get all countries
   getCountriesFromData();
 
+  // Adding countries to the dropdown list
   for (int i=0;i<finalCountries.length;i++) {
     if(finalCountries[i] != null)
       ddl.addItem(" (" + finalCountries[i].shortName + ") " + finalCountries[i].longName, i);
@@ -168,6 +183,7 @@ void customizeDL(DropdownList ddl) {
 }
 
 void getCountriesFromData(){
+  // Loop through the data.csv and save all of the countries, which have data in it
   int count = 0;
   finalCountries = new Countries[table.getRowCount()];
   //finalCountries[0] = new Countries(0, table.getRow(0).getString(7), table.getRow(0).getString(6));
@@ -287,29 +303,66 @@ void getMaxCase(boolean show){
   text("Country: " + maxCase.getString(6) + "\nCases: " + maxCase.getInt(4) + "\nDeaths: " + maxCase.getInt(5), 0, 60);
 }
 
-void showBarChart(){
+void createRadioButton(){
+  // Create radiobuttons with the first element being active
+  rb = cp5.addRadioButton("radioButton")
+                   .setPosition(150, 60)
+                   .setSize(40,20)
+                   .setColorForeground(color(120))
+                   .setColorActive(color(255))
+                   .setColorLabel(color(0))
+                   .setItemsPerRow(2)
+                   .setSpacingColumn(50)
+                   .addItem("Cases",0)
+                   .addItem("Deaths",1)
+                   ;
+  rb.activate(0);
+       
+  for(Toggle t:rb.getItems()) {
+    t.getCaptionLabel().setColorBackground(color(255,80));
+    t.getCaptionLabel().getStyle().moveMargin(-7,0,0,-3);
+    t.getCaptionLabel().getStyle().movePadding(7,0,0,3);
+    t.getCaptionLabel().getStyle().backgroundWidth = 45;
+    t.getCaptionLabel().getStyle().backgroundHeight = 13;
+  }
+}
+void showBarChart(boolean showCases){
+  float maxDeath = 0;   
+  
+  // Getting the values from the sortedTable in float to be used in the barchart
+  float[] cases = new float[sortedTable.getRowCount()];
+  float[] deaths = new float[sortedTable.getRowCount()];
+  for(int i = 0; i < cases.length; i++){
+    cases[i] = Float.parseFloat(sortedTable.getRow(i).getString(4));
+    deaths[i] = Float.parseFloat(sortedTable.getRow(i).getString(5));
+    if(maxDeath < deaths[i])  maxDeath = deaths[i];
+  }
+
   // Setting the min and max values of cases
   barchart.setMinValue(0);
-  barchart.setMaxValue(maxCase.getInt(4) + maxCase.getInt(4)*0.1);
-     
+  if(showCases)
+    barchart.setMaxValue(maxCase.getInt(4)*1.1);
+  else
+    barchart.setMaxValue(maxDeath);
   // Showing axis labels (country names - X, number of cases - Y)
   barchart.showValueAxis(true);
   barchart.setValueFormat("###,###");
   barchart.showCategoryAxis(true);
   
-  // Getting the values from the sortedTable in float to be used in the barchart
-  float[] values = new float[sortedTable.getRowCount()];
-  for(int i = 0; i < values.length; i++){
-    values[i] = Float.parseFloat(sortedTable.getRow(i).getString(4));
-  }
-  barchart.setData(values);
+  if(showCases)
+    barchart.setData(cases);
+  else
+    barchart.setData(deaths);
   // Setting the labels for each column
   barchart.setBarLabels(sortedTable.getStringColumn(7));
 
   // Drawing the barchart
   barchart.draw(25, 50, width-50, height-140);
+  barchart.updateLayout();
+
 }
-void showLineChart(){
+void showLineChart(boolean showCases){
+  // Save and show cases with linechart (saving deaths as well for future usages)
   float[] number = new float[countryTable.getRowCount()];
   float[] cases = new float[countryTable.getRowCount()];
   float[] deaths = new float[countryTable.getRowCount()];
@@ -318,8 +371,11 @@ void showLineChart(){
     cases[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(4));
     deaths[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(5));
   }
-  linechart.setData(number, cases);
-
+  if(showCases)
+    linechart.setData(number, cases);
+  else
+    linechart.setData(number, deaths);
+  // Customize linechart
   linechart.showXAxis(true); 
   linechart.showYAxis(true); 
   //fill(color(180,50,50,100));
@@ -327,7 +383,10 @@ void showLineChart(){
   // Symbol colours
   //linechart.setPointColour(color(180,50,50,100));
   linechart.setPointSize(0);
-  linechart.setLineColour(color(0, 100, 0));
+  if(showCases)
+    linechart.setLineColour(color(0, 100, 0));
+  else
+    linechart.setLineColour(color(0));
   linechart.setLineWidth(2);
   linechart.draw(70,100,width-110,height-150);
   linechart.updateLayout();
@@ -335,7 +394,10 @@ void showLineChart(){
   text(minDate.toString(), 95, height-25);
   text(maxDate.toString(), width-95, height-25);
   textAlign(CENTER);
-  text("Cases for each day\n(i^th day * cases)", 525, height-25);
+  if(showCases)
+    text("Cases for each day\n(i^th day * cases)", 525, height-25);
+  else
+    text("Deaths for each day\n(i^th day * deaths)", 525, height-25);
   textAlign(LEFT);
 }
 
