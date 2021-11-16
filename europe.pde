@@ -98,6 +98,8 @@ void draw(){
     colourCountries();
     // Show info for the country, which contains the mouse coordinates
     findChosenCountry();
+    // Sshow colour scale
+    colourScale(15,150,40,100);
 
     // Don't show a barchart or radiobutton on this page
     if(dl != null){
@@ -182,6 +184,21 @@ void draw(){
       //text(chosenCountry2.longName, 285, 90);
     }
   }
+}
+
+void colourScale(int fromX, int fromY, int width, int height){
+  color maxColour = color(0, 230, 0, 25);
+  color minColour = color(230, 30, 30);
+
+  for (int i = fromY; i <= fromY+height; i++) {
+    float inter = map(i, fromY, fromY+height, 0, 1);
+    color c = lerpColor(minColour, maxColour, inter);
+    stroke(c);
+    line(fromX, i, fromX+width, i);
+  }
+  fill(0);
+  text(maxCase.getInt(4), fromX, fromY-10);
+  text("0", fromX, fromY+height+15);
 }
 
 void customizeDL(DropdownList ddl, color labelColor) {
