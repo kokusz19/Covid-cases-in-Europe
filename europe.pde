@@ -22,7 +22,7 @@ import controlP5.*;
 
 PShape europe;
 Table table;
-Table sortedTable, countryTable;
+Table sortedTable, countryTable, countryTable2;
 Date minDate, maxDate, chosenDate;
 HScrollbar scrollbar;
 TableRow maxCase;
@@ -33,9 +33,11 @@ int countriesCount = 0;
 int panelSelected = 1;
 Button panel1, panel2, panel3, panel4;
 BarChart barchart;
-XYChart linechart;
+XYChart linechart, linechart2;
 ControlP5 cp5;
+ControlP5 cp6;
 DropdownList dl;
+DropdownList dl2;
 RadioButton rb;
 
 void setup(){
@@ -55,7 +57,9 @@ void setup(){
   // Create a barchart
   barchart = new BarChart(this);
   cp5 = new ControlP5(this);
+  cp6 = new ControlP5(this);
   linechart = new XYChart(this);
+  linechart2 = new XYChart(this);
 
   // Find minimum and maximum dates in the CSV
   getMinMaxDates();
@@ -99,6 +103,8 @@ void draw(){
     if(dl != null){
       dl.remove();
       dl = null;
+      dl2.remove();
+      dl2 = null;
     } if(rb != null){
       rb.remove();
       rb = null;
@@ -122,6 +128,8 @@ void draw(){
     if(dl != null){
       dl.remove();
       dl = null;
+      dl2.remove();
+      dl2 = null;
     }
     if(rb == null)
       createRadioButton();
@@ -138,28 +146,45 @@ void draw(){
     // Create a dropdownlist with it's elements
     if(dl == null){
       dl = cp5.addDropdownList("Please select a country").setPosition(15, 60);
-      customizeDL(dl);
+      dl2 = cp6.addDropdownList("Please select a country").setPosition(150, 60);
+      customizeDL(dl, color(1, 150, 32));
+      customizeDL(dl2, color(0, 51, 102));
+    } if(rb != null){
+      rb.remove();
+      rb = null;
     }
-    if(dl.getValue() != 0.0 || dl.getLabel().equals(" ("+finalCountries[0].shortName+") " + finalCountries[0].longName)){
+    if((dl.getValue() != 0.0 || dl.getLabel().equals(" ("+finalCountries[0].shortName+") " + finalCountries[0].longName)) && (dl2.getValue() != 0.0 || dl2.getLabel().equals(" ("+finalCountries[0].shortName+") " + finalCountries[0].longName))){
       Countries chosenCountry = finalCountries[(int)dl.getValue()];
+      Countries chosenCountry2 = finalCountries[(int)dl2.getValue()];
       
       countryTable = loadTable("data.csv", "header");
-      boolean showCases = true;
+      countryTable2 = loadTable("data.csv", "header");
       // Remove not chosen countries from countryTable
       for(int i = countryTable.getRowCount()-1 ; i >= 0; i--)
         if(!countryTable.getRow(i).getString(7).equals(chosenCountry.shortName))
           countryTable.removeRow(i);
-      // Create radiobutton only if it has not been created yet
-      if(rb == null)
-        createRadioButton();
-      // showCases will be used to indicate if the graph will show cases or deaths
-      showCases = rb.getState(0);
-      showLineChart(showCases);
+      for(int i = countryTable2.getRowCount()-1 ; i >= 0; i--)
+        if(!countryTable2.getRow(i).getString(7).equals(chosenCountry2.shortName))
+          countryTable2.removeRow(i);
+
+      float globalMax = 0;
+      for(int i = 0; i < countryTable.getRowCount()-2; i++)
+        if(globalMax < Float.parseFloat(countryTable.getRow(i).getString(4)))
+          globalMax = Float.parseFloat(countryTable.getRow(i).getString(4));
+      for(int i = 0; i < countryTable2.getRowCount()-2; i++)
+        if(globalMax < Float.parseFloat(countryTable2.getRow(i).getString(4)))
+          globalMax = Float.parseFloat(countryTable2.getRow(i).getString(4));
+      showLineChart(countryTable, linechart, color(1, 150, 32), globalMax);
+      showLineChart(countryTable2, linechart2, color(0, 51, 102), globalMax);
+      //fill(color(1, 150, 32));
+      //text(chosenCountry.longName, 285, 75);
+      //fill(color(0, 51, 102));
+      //text(chosenCountry2.longName, 285, 90);
     }
   }
 }
 
-void customizeDL(DropdownList ddl) {
+void customizeDL(DropdownList ddl, color labelColor) {
   // a convenience function to customize a DropdownList
   ddl.setHeight(200);
   ddl.setWidth(ddl.getWidth()+25);
@@ -178,7 +203,7 @@ void customizeDL(DropdownList ddl) {
   //ddl.scroll(0);
   ddl.setColorBackground(color(185));
   ddl.setColorActive(color(255, 128));
-  ddl.setColorLabel(color(0));
+  ddl.setColorLabel(labelColor);
   ddl.setColorValue(color(0));
 }
 
@@ -361,47 +386,39 @@ void showBarChart(boolean showCases){
   barchart.updateLayout();
 
 }
-void showLineChart(boolean showCases){
+void showLineChart(Table tmpTable, XYChart tmpLineChart, color lineColor, float globalMax){
   // Save and show cases with linechart (saving deaths as well for future usages)
-  float[] number = new float[countryTable.getRowCount()];
-  float[] cases = new float[countryTable.getRowCount()];
-  float[] deaths = new float[countryTable.getRowCount()];
+  float[] number = new float[tmpTable.getRowCount()];
+  float[] cases = new float[tmpTable.getRowCount()];
+  float[] deaths = new float[tmpTable.getRowCount()];
   for(int i = cases.length-1; i >= 0 ; i--){
     number[cases.length-i-1] = cases.length-i-1;
-    cases[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(4));
-    deaths[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(5));
+    cases[cases.length-i-1] = Float.parseFloat(tmpTable.getRow(i).getString(4));
+    deaths[cases.length-i-1] = Float.parseFloat(tmpTable.getRow(i).getString(5));
   }
   cases[0] = 0;
   cases[1] = 0;
   deaths[0] = 0;
   deaths[1] = 1;
-  if(showCases)
-    linechart.setData(number, cases);
-  else
-    linechart.setData(number, deaths);
+  tmpLineChart.setData(number, cases);
   // Customize linechart
-  linechart.showXAxis(true); 
-  linechart.showYAxis(true); 
+  tmpLineChart.showXAxis(true); 
+  tmpLineChart.showYAxis(true); 
   //fill(color(180,50,50,100));
-  linechart.setMinY(0);
+  tmpLineChart.setMinY(0);
+  tmpLineChart.setMaxY(globalMax);
   // Symbol colours
   //linechart.setPointColour(color(180,50,50,100));
-  linechart.setPointSize(0);
-  if(showCases)
-    linechart.setLineColour(color(0, 100, 0));
-  else
-    linechart.setLineColour(color(0));
-  linechart.setLineWidth(2);
-  linechart.draw(70,100,width-110,height-150);
-  linechart.updateLayout();
+  tmpLineChart.setPointSize(0);
+  tmpLineChart.setLineColour(lineColor);
+  tmpLineChart.setLineWidth(2);
+  tmpLineChart.draw(70,100,width-110,height-150);
+  tmpLineChart.updateLayout();
   textAlign(LEFT);
   text(minDate.toString(), 95, height-25);
   text(maxDate.toString(), width-95, height-25);
   textAlign(CENTER);
-  if(showCases)
-    text("Cases for each day\n(i^th day * cases)", 525, height-25);
-  else
-    text("Deaths for each day\n(i^th day * deaths)", 525, height-25);
+  text("Cases for each day\n(i^th day * cases)", 525, height-25);
   textAlign(LEFT);
 }
 
