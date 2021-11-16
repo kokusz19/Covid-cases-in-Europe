@@ -371,6 +371,10 @@ void showLineChart(boolean showCases){
     cases[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(4));
     deaths[cases.length-i-1] = Float.parseFloat(countryTable.getRow(i).getString(5));
   }
+  cases[0] = 0;
+  cases[1] = 0;
+  deaths[0] = 0;
+  deaths[1] = 1;
   if(showCases)
     linechart.setData(number, cases);
   else
